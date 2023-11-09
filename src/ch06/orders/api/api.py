@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 import uuid
+from typing import Optional
 
 from fastapi import HTTPException
 from starlette.responses import Response
@@ -26,8 +27,35 @@ orders = {
 }
 
 @app.get('/orders', response_model=GetOrdersSchema)
-def get_orders():
-    return {'orders': ORDERS}
+def get_orders(cancelled: Optional[bool] = None, limit: Optional[int] =None):
+    # パラメータが設定されていない場合は全て返す
+    if cancelled is None and limit is None:
+        return {'orders': orders}
+    
+    # もしパラメータが設定されている場合にはフィルタリングを以下で実施する
+    query_set = [order for order in orders]
+    
+    # cancelled が設定されている場合、status で絞り込みを実施
+    if cancelled is not None:
+        if cancelled:
+            query_set = [
+                order 
+                for order in query_set
+                if order['status'] == Status.cancelled.value
+            ]
+            
+        else:
+            query_set = [
+                order
+                for order in query_set
+                if order['status'] != Status.cancelled.value
+            ]
+        
+    # limit が設定されている場合、limit の数に絞り込みを実施
+    if limit is not None and len(query_set) > limit:
+        return {'orders': query_set[:limit]}
+    
+    return {'orders': query_set}
 
 @app.post('/orders', status_code=status.HTTP_201_CREATED, response_model=GetOrdersSchema)
 def create_order(order_detail: CreateOrderSchema):

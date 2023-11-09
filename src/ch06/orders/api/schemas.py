@@ -23,6 +23,10 @@ class OrderItemSchema(BaseModel):
     size: Size
     quantity: Optional[conint(ge=1, strict=True)]
     
+    # スキーマで定義されていないプロパティを禁止
+    class Config:
+        extra = 'forbid'
+    
     # @validator デコレータの元定義されるメソッドは classmethod であることが想定されている。
     @validator('quantity')
     def quantity_non_nullable(cls, value):
@@ -31,6 +35,10 @@ class OrderItemSchema(BaseModel):
     
 class CreateOrderSchema(BaseModel):
     order: conlist(OrderItemSchema, min_length=1)
+    
+    # スキーマで定義されていないプロパティを禁止
+    class Config:
+        extra = 'forbid'
 
 class GetOrderSchema(CreateOrderSchema):
     id: UUID
